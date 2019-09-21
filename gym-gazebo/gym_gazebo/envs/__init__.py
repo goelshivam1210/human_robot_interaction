@@ -1,0 +1,23 @@
+from gym_gazebo.envs.gazebo_env import GazeboEnv
+
+# Turtlebot
+from gym_gazebo.envs.gazebo_maze_turtlebot_lidar import GazeboMazeTurtlebotLidarEnv
+from gym_gazebo.envs.gazebo_circuit_turtlebot_lidar import GazeboCircuitTurtlebotLidarEnv
+from gym_gazebo.envs.gazebo_circuit2_turtlebot_lidar import GazeboCircuit2TurtlebotLidarEnv
+from gym_gazebo.envs.gazebo_circuit2_turtlebot_lidar_nn import GazeboCircuit2TurtlebotLidarNnEnv
+from gym_gazebo.envs.gazebo_circuit2c_turtlebot_camera_nn import GazeboCircuit2cTurtlebotCameraNnEnv
+from gym_gazebo.envs.gazebo_round_turtlebot_lidar import GazeboRoundTurtlebotLidarEnv
+from gym_gazebo.envs.gazebo_smarthome_turtlebot_lidar_nn import GazeboHumanSmartHomeTurtlebotLidarEnv
+from gym_gazebo.envs.gazebo_smarthome_turtlebot_camera_nn import GazeboHumanSmartHomeTurtlebotLidarCameraEnv
+# here the new environment needs to be imported
+#from gym.gazebo.envs.gazebo_human_in_smarthome_lidar import GazeboSmartHomeLidarEnv
+#from gym_gazebo.envs.gazebo_smarthome_turtlebot_lidar_camera_nn import GazeboHumanSmartHomeTurtlebotLidarCameraEnv
+
+# Erle-Copter
+from gym_gazebo.envs.gazebo_erlecopter_hover import GazeboErleCopterHoverEnv
+
+#Erle-Rover
+from gym_gazebo.envs.gazebo_maze_erlerover_lidar import GazeboMazeErleRoverLidarEnv
+
+# converter
+from message_converter import *

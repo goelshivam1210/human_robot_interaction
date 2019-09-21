@@ -1,0 +1,87 @@
+<?xml version="1.0"?>
+<robot name="pantilt" xmlns:xacro="http://ros.org/wiki/xacro">
+    <xacro:macro name="pantilt" params="parent">
+        <!-- Based on: https://answers.ros.org/question/142366/simulating-a-camera-with-a-pan-tilt-unit/ -->
+        <joint name="head_pan_joint" type="revolute">
+            <axis xyz="0 0 1" />
+            <limit lower="-${M_PI/2}" upper="${M_PI/2}"  effort="50" velocity="1"/>
+            <!--
+                 Measure these relative to parent
+                 These are w.r.t. base_link (the parent), given in meters
+                 This is to center of the rotating part of the bottom (pan) servo.
+                 -->
+            <origin xyz="0.0381 0 1.3081" rpy="0 0 0"/>
+            <parent link="${parent}"/>
+            <child link="pan_link"/>
+        </joint>
+
+        <joint name="head_tilt_joint" type="revolute">
+            <axis xyz="0 1 0" />
+            <limit lower="-${M_PI/2}" upper="${M_PI/2}"  effort="50" velocity="1"/>
+            <origin xyz="0.0169 0 0.01905" rpy="0 -0.25 0"/>
+            <parent link="pan_link"/>
+            <child link="tilt_link"/>
+        </joint>
+
+        <link name="pan_link">
+            <collision>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <geometry>
+                    <box size="0.03175 0.0508 0.03175"/>
+                </geometry>
+            </collision>
+            <visual>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <geometry>
+                    <box size="0.03175 0.0508 0.03175"/>
+                </geometry>
+            </visual>
+            <inertial>
+                <mass value="1e-5" />
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+            </inertial>
+        </link>
+        <gazebo reference="pan_link">
+            <material>Gazebo/Yellow</material>
+        </gazebo>
+
+        <link name="tilt_link">
+            <collision>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <geometry>
+                    <box size="0.0254 0.0508 0.0381"/>
+                </geometry>
+            </collision>
+            <visual>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <geometry>
+                    <box size="0.0254 0.0508 0.0381"/>
+                </geometry>
+            </visual>
+            <inertial>
+                <mass value="1e-5" />
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+            </inertial>
+        </link>
+        <gazebo reference="tilt_link">
+            <material>Gazebo/Red</material>
+        </gazebo>
+
+        <transmission name="pan_trans">
+            <type>transmission_interface/SimpleTransmission</type>
+            <joint name="head_tilt_joint"/>
+            <actuator name="camera_pan_unit">
+                <hardwareInterface>EffortJointInterface</hardwareInterface>
+                <mechanicalReduction>1</mechanicalReduction>
+            </actuator>
+        </transmission>
+
+        <gazebo>
+            <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+                <robotNamespace>/aircobot</robotNamespace><!--seems to work-->
+            </plugin>
+        </gazebo>
+    </xacro:macro>
+</robot>
