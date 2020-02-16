@@ -145,15 +145,24 @@ class GazeboHumanSmartHomeTurtlebotLidarCameraEnv(gazebo_env.GazeboEnv):
             reward_pose = 0.45
         # if none of the above conditions hold true then the reward should be negative, reinforcing the robot to find human
         else:
-            if self.episode_number > 0 and self.episode_number < 1000:
-                reward_pose = 0
+        #print ("C1_avail:{} C2_avail:{} C1_unavail:{} C2_unavail:{}".format(idx_avail_c1, idx_avail_c2, idx_unavail_c1, idx_unavail_c2))
+            #print ("Sum (avail C1): {} Sum (avail C2): {} Sum (unavail C1) : {} Sum (unavail C2): {}".format(sum(avail_c1), sum(avail_c2), sum(unavail_c1), sum(unavail_c2)))
+            # no negative reward if still not spotted any human
+            # check what is the value of sums do we get? 
+            reward_pose = 0
+            
+            '''
+            if self.episode_number > 0 and self.episode_number < 500:
+                reward_pose = 0 # instead of zero, we can directly give it the sum
+            elif self.episode_number > 500 and self.episode_number <1000:
+                reward_pose = +0.035
             elif self.episode_number > 1000 and self.episode_number <1750:
-                reward_pose = -0.05
+                reward_pose = +0.050
             elif self.episode_number > 1750 and self.episode_number < 2500:
-                reward_pose = -0.1
+                reward_pose = +0.100
             else:
                 reward_pose = -0.15
-
+            '''
         # let us first add all the detection points and simply add them to the reward
         #print "Reward_pose====>>>>{} Episode_number=====>>>>{}".format(reward_pose,self.episode_number)      
         return (reward_pose)
@@ -188,7 +197,9 @@ class GazeboHumanSmartHomeTurtlebotLidarCameraEnv(gazebo_env.GazeboEnv):
 
     def _step(self, action):
         #print "EPISODE_NUMBER===>>>>{}".format(self.episode_number)
+        #print ("Action ========>>>>>{}".format(action))
         pose_reward = 0
+        #reward = 0
         rospy.wait_for_service('/gazebo/unpause_physics')
         try:
             self.unpause()
@@ -247,7 +258,7 @@ class GazeboHumanSmartHomeTurtlebotLidarCameraEnv(gazebo_env.GazeboEnv):
             pose_reward = self.calculate_pose_reward(pose_data)
         else:
             state = np.append(scan_data, self.pose_array)
-        
+        #print ("Pose_reward =====>>>>> {}".format(pose_reward))
         '''#Image data not required in this case
         image_data = None
         success=False
@@ -257,7 +268,7 @@ class GazeboHumanSmartHomeTurtlebotLidarCameraEnv(gazebo_env.GazeboEnv):
                 image_data = rospy.wait_for_message('/camera/rgb/image_raw', Image, timeout=5)
                 h = image_data.height
                 w = image_data.width
-                cv_image = CvBridge().imgmsg_to_cv2(image_data, "bgr8")
+         pp       cv_image = CvBridge().imgmsg_to_cv2(image_data, "bgr8")
                 #temporal fix, check image is not corrupted
                 if not (cv_image[h/2,w/2,0]==178 and cv_image[h/2,w/2,1]==178 and cv_image[h/2,w/2,2]==178):
                     success = True
@@ -295,7 +306,6 @@ class GazeboHumanSmartHomeTurtlebotLidarCameraEnv(gazebo_env.GazeboEnv):
         else:
             reward = -200'''
 
-
         # Add center of the track reward
         # len(data.ranges) = 100
         laser_len = len(data_scan.ranges)
@@ -308,17 +318,21 @@ class GazeboHumanSmartHomeTurtlebotLidarCameraEnv(gazebo_env.GazeboEnv):
         # 4 actions
         if not done:
             if action == 0:
-                reward = 1 / float(center_detour+1) + pose_reward
+                reward = 1 / float(center_detour+1)
+                reward_total = reward+pose_reward
             elif action_sum > 45: #L or R looping
-                reward = -0.5 + pose_reward
+                reward = -0.5
+                reward_total = reward+pose_reward
             else: #L or R no looping
-                reward = 0.5 / float(center_detour+1) + pose_reward
+                reward = 0.5 / float(center_detour+1)
+                reward_total = reward+pose_reward
         # If the robot has a collision
         else:
+            reward_total = -1
             reward = -1
 
         #print("detour= "+str(center_detour)+" :: reward= "+str(reward)+" ::action="+str(action))
-
+        #print ("EPISODE: {} Reward======>>>>>>> {}".format(self.episode_number,reward))
         '''x_t = skimage.color.rgb2gray(cv_image)
         x_t = skimage.transform.resize(x_t,(32,32))
         x_t = skimage.exposure.rescale_intensity(x_t,out_range=(0,255))'''
@@ -328,10 +342,10 @@ class GazeboHumanSmartHomeTurtlebotLidarCameraEnv(gazebo_env.GazeboEnv):
         #cv_image = cv_image[(self.img_rows/20):self.img_rows-(self.img_rows/20),(self.img_cols/10):self.img_cols] #crop image
         #cv_image = skimage.exposure.rescale_intensity(cv_image,out_range=(0,255))
 
-
+        info = [reward, pose_reward]
         #state = cv_image.reshape(1, 1, cv_image.shape[0], cv_image.shape[1])
         #print (state)
-        return np.asarray(state), reward, done, {}
+        return np.asarray(state), reward_total, done, info
 
         # test STACK 4
         #cv_image = cv_image.reshape(1, 1, cv_image.shape[0], cv_image.shape[1])
