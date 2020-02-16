@@ -1,185 +1,137 @@
-# teaching agents to navigate in a map-less environment
+# Teaching agents to navigate in a map-less environment
+
+<b> Authors: </b>  
+Shivam Goel shivam.goel@wsu.edu  
+Abhijay abhijay@pdx.edu  
+
+Based on:  
+* [erlebot/gym-gazebo](https://github.com/erlerobot/gym-gazebo)
+* [Tf Pose Estimation](https://github.com/ildoonet/tf-pose-estimation)
+
+**Table of Contents**<br>
+1. [Getting Started](#getting-started)  
+   a. Docker link  
+   b. Requirements
+2. [Running the experiments](#running-the-experiments)   
+   a. Run docker  
+   b. Clear all previously running processes  
+   c. Experiment
+3. [Visual on Gazebo](#visual-on-gazebo)
+4. [Useful Docker Commands](#useful-docker-commands)
 
 ## Getting Started
 
-### Docker: How to check existing running algorithm
+<b>Docker link</b>
+
+Wil be updated soon  
+
+<b> Requirements </b>  
+Host machine: Ubuntu 16, CUDA Version: 10.1  
+
+### Running the experiments   
+
+<b> Run the docker </b>
+
+```
+sudo docker run --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=all -it gym-gazebo_v6.1
+```
+
+<b> Clear all previously running processes </b>  
+
+```
+ps -ef | grep ros | awk '{print $2}' | xargs kill -9
+ps -ef | grep python | awk '{print $2}' | xargs kill -9
+ps -ef | grep xvfb | awk '{print $2}' | xargs kill -9
+```
+
+<b> Experiment </b> 
+
+```
+# Install conda
+conda activate tf-gpu-1-5
+
+# For entering docker  
+# Open two different terminals and run  
+sudo docker exec -it ef6dd4c9b971 bash  
+# One is for running pose estimation and the other for dqn
+
+# On terminal 1
+cd /usr/local/gym/gym-gazebo/examples/scripts_turtlebot
+run -xvfb
+nohup python -u smarthome_turtlebot_lidar_dqn_withAttn_v3.py > results_withAtt_Feb16.out &
+
+# On terminal 2 (simultaneously)
+cd /usr/local/gym/tf-pose-estimation#
+nohup python run_with_ros.py --model=mobilenet_thin > pose.out &
+
+# Monitor results on terminal 1
+tail -f results_withAtt_Feb16.out
+```
+
+### Visual on Gazebo
+To view the robot acting in the environment using gzserver do the following  
+```
+export GAZEBO_ID=`sudo docker ps | grep gym-gazebo | awk '{print $1}'`
+export GAZEBO_MASTER_IP=$(sudo docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $GAZEBO_ID)
+export GAZEBO_MASTER_URI=$GAZEBO_MASTER_IP:11345
+
+# Note: With sudo (just copy and make sure the grep is able to get the name of the current docker)  
+
+export GAZEBO_ID=`sudo docker ps | grep gym_gazebo | awk '{print $1}'`
+
+gzclient
+```
+
+### Useful Docker Commands
+
+Check running containers  
 
 ```
 sudo docker ps -a
 ```
 
+Start a running docker  
 ```
-sudo docker attach <container ID>
-```
-
-```
-sudo docker attach <container ID>
-```
-
-```
-tmux a
-```
-
-### Docker: How to run the code
-
-Make sure you are on the correct environment
-
-```
-$ conda activate tf-gpu-1-5
+sudo docker start <container-id>
 ```
 ```
-open a tmux session
-$ tmux
-$ ctrl+b
-%
-cd /usr/local/gym/gym-gazebo/examples/scripts_turtlebot
-
-run -xvfb
-
-python smarthome_turtlebot_lidar_dqn.py
-
-on another terminal
-
-$ cd /usr/local/gym/tf-pose-estimation#
-
-$ python run_with_ros.py --model=mobilenet_thin
-
+sudo docker attach <container-id>
 ```
 
-
-##### Get the docker:
-
-```
-sudo docker pull erlerobotics/gym-gazebo:latest
-```
-
-#### Run the docker:
-
-```
-sudo docker run -it erlerobotics/gym-gazebo
-```
-
-https://medium.com/the-code-review/top-10-docker-run-command-options-you-cant-live-without-a-reference-d256834e86c1
-
-
-#### Create a volume:
+Creating volume
 ```
 docker volume create erlerobot_test_v1
-```
-
-```
 sudo docker volume ls
-```
-
-```
 docker volume rm my-vol
 ```
 
-https://docs.docker.com/engine/reference/commandline/run/
-https://docs.docker.com/storage/volumes/
-
-#### Running volume with docker:
-
+Commit docker changes  
 ```
-sudo docker run -it -v erlerobot_test_v1:/data gym-gazebo_v1.1
+sudo docker commit <container-id> gym-gazebo_v1.1
 ```
 
-#### List dockers:
-
+Create a compressed docker image to transfer to another system  
 ```
-sudo docker image ls
-```
-
-#### List started/running dockers:
-```
-sudo docker ps -a
+sudo docker save gym-gazebo_v1.1 > gym-gazebo_v1.1.tar.gz
 ```
 
-#### Start a running docker:
-```
-sudo docker start 5cc0c631786d
-```
-```
-sudo docker attach 5cc0c631786d
-```
-#### Get details of the docker:
-
-```
-sudo docker info
-```
-#### Docker locations (maybe):
-
-```
-sudo ls /var/lib/docker
-```
-
-#### Removing a docker image from disk:
-```
-sudo docker rmi nvidia/cuda:8.0
-```
-```
-sudo docker image ls
-```
-#### For starting another terminal:
-```
-sudo docker exec -it c6dbab3a187a bash
-```
-
-```
-sudo docker exec -it <container-id> bash
-```
-
-
-### Commiting a docker:
-```
-$ sudo docker commit 5cc0c631786d gym-gazebo_v1.1
-```
-Create a compressed docker image to transfer to another system:
-```
-$ sudo docker save gym-gazebo_v1.1 > gym-gazebo_v1.1.tar.gz
-```
-
-
-### How to load a docker from images
+Load a docker image  
 ```
 sudo docker image load --input gym_gazebo_v1.2.0.tar.gz
 ```
 
-Then check `$ sudo docker images`
-
-After checking now run the docker `$ sudo docker run -it gym_gazebo_v1.2.0`
-Please store run commands in a readme file
-
-### To get files from the docker to hard disk:
+Get files from the docker to hard disk  
 ```
-$ sudo docker cp c6dbab3a187a:/data/turtlebotExperiments_v1/. turtlebotExperiments_v1/.
+sudo docker cp c6dbab3a187a:/data/turtlebotExperiments_v1/. turtlebotExperiments_v1/.
 ```
 Vice Versa:
 ```
-$ sudo docker cp models.zip 0cccde0d68ff:/usr/local/gym/
+sudo docker cp models.zip 0cccde0d68ff:/usr/local/gym/
+```
+
+Removing docker
+```
+docker rm <container-id>
 ```
 
 
-### For removing a docker which is not running
-
-Check dockers using `$ docker ps -a`
-Remove using `$ docker rm image_id`
-
-### To view the robot acting in the environment using gzserver do the following:
-```
-$ export GAZEBO_ID=`sudo docker ps | grep gym-gazebo | awk '{print $1}'`
-```
-```
-$ export GAZEBO_MASTER_IP=$(sudo docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $GAZEBO_ID)
-export GAZEBO_MASTER_URI=$GAZEBO_MASTER_IP:11345
-```
-Note: With sudo (just copy and make sure the grep is able to get the name of the current docker)
-```
-$ export GAZEBO_ID=`sudo docker ps | grep gym_gazebo | awk '{print $1}'`
-```
-
-
-Then run
-```
-$ gzclient
-```
